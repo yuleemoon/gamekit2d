@@ -4,20 +4,28 @@ You want to make a 2D game, but every time you open the pygame docs you spend
 an hour setting up a window and an event loop before anything moves on screen.
 
 gamekit is the opposite. One class, a handful of methods, zero third-party
-dependencies (it runs on the standard library: tkinter for rendering and
-input, winsound for audio). You still get everything pygame gives you —
-sprites, input, collisions, images, fonts, sound, shapes, timing, scenes —
-but the code you write is maybe a third of the size.
+dependencies (it runs on the standard library: a self-made GDI renderer on
+Windows / tkinter elsewhere, and winsound for audio). You still get
+everything pygame gives you — sprites, input, collisions, images, fonts,
+sound, shapes, timing, scenes — but the code you write is maybe a third of
+the size.
 
 This tutorial goes end to end: the loop, sprites, movement, input, collision,
 text, UI, shapes, images, sound, particles, scenes, and a full game at the end.
 Every chapter has runnable code. Install it with:
 
 ```
-pip install gamekit
+pip install gamekit2d
 ```
 
 Python 3.9 or newer. Nothing else.
+
+> **Rendering backends.** `Game(backend="auto")` is the default: on Windows it
+> uses gamekit's own GDI kernel (native window, double-buffered BitBlt, an
+> order of magnitude faster than tkinter — 1000+ colored sprites stay smooth),
+> and falls back to tkinter everywhere else. You can force either with
+> `backend="gdi"` or `backend="tk"`. Game code doesn't care which one is
+> running; only that one parameter changes.
 
 ---
 
