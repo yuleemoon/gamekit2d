@@ -1,0 +1,10 @@
+# 打包进 sdist 源码包的额外内容
+include README.md
+include TUTORIAL.md
+include TUTORIAL.html
+include LICENSE
+include pyproject.toml
+recursive-include examples *.py
+recursive-include examples/assets *.png
+recursive-include tests *.py
+include TUTORIAL_zh.md

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gamekit2d · GitHub Actions 自动发布教程</title>
+<style>
+  :root { --bg:#0f1117; --card:#171a23; --line:#262b3a; --txt:#e6e9f0; --dim:#8b93a7;
+          --acc:#58a6ff; --green:#3fb950; --yellow:#d29922; --red:#f85149; --code:#0d1117; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--txt); font:15px/1.7 "Segoe UI","Microsoft YaHei",system-ui,sans-serif; padding:40px 16px; }
+  .wrap { max-width:860px; margin:0 auto; }
+  h1 { font-size:26px; margin-bottom:6px; }
+  .sub { color:var(--dim); margin-bottom:28px; }
+  h2 { font-size:20px; margin:36px 0 14px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  h2 .num { color:var(--acc); margin-right:8px; }
+  h3 { font-size:16px; margin:20px 0 8px; color:var(--acc); }
+  p, li { color:var(--txt); margin-bottom:8px; }
+  ul, ol { padding-left:22px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:14px 0; }
+  .tip { border-left:4px solid var(--green); }
+  .warn { border-left:4px solid var(--yellow); }
+  .danger { border-left:4px solid var(--red); }
+  pre { background:var(--code); border:1px solid var(--line); border-radius:8px; padding:14px 16px;
+        overflow-x:auto; font:13px/1.6 Consolas,"Courier New",monospace; margin:10px 0; }
+  code { background:var(--code); border:1px solid var(--line); border-radius:4px; padding:1px 6px;
+         font:13px Consolas,monospace; color:var(--acc); }
+  pre code { border:none; padding:0; color:var(--txt); }
+  .c { color:#7d8590; }
+  .g { color:var(--green); }
+  .y { color:var(--yellow); }
+  .r { color:var(--red); }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; }
+  th { background:var(--card); color:var(--acc); }
+  .step { display:flex; gap:14px; margin:16px 0; }
+  .step .badge { flex:none; width:34px; height:34px; border-radius:50%; background:var(--acc); color:#0f1117;
+                 font-weight:700; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .footer { margin-top:40px; color:var(--dim); font-size:13px; border-top:1px solid var(--line); padding-top:14px; }
+  .kbd { background:var(--card); border:1px solid var(--line); border-bottom-width:2px; border-radius:4px;
+         padding:1px 7px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>gamekit2d · GitHub Actions 自动发布教程</h1>
+<p class="sub">一次配置，以后发版只需打一个 tag——编译、测试、打包、上传 PyPI 全自动</p>
+
+<div class="card">
+<b>这套流程做什么：</b>
+<ol>
+  <li>你 <b>push 代码</b> 到 GitHub 仓库 <code>yuleemoon/gamekit2d</code></li>
+  <li>GitHub 免费开一台 Windows 虚拟机，装上 Python 3.13</li>
+  <li>自动执行：编译 C 扩展 → 跑 39 个单元测试 → 打 wheel + sdist → twine 校验</li>
+  <li>自动把 <code>dist/</code> 里的包上传到 PyPI，全世界都能 <code>pip install gamekit2d</code></li>
+</ol>
+</div>
+
+<h2><span class="num">1</span>准备工作</h2>
+<div class="card">
+<ul>
+  <li>GitHub 账号（已登录 <a href="https://github.com/yuleemoon/gamekit2d" style="color:var(--acc)">yuleemoon/gamekit2d</a>）</li>
+  <li>PyPI 账号（<a href="https://pypi.org/account/register/" style="color:var(--acc)">pypi.org</a>）</li>
+  <li>本地项目在 <code>C:\Users\Administrator\Desktop\new-chat</code>（已含 <code>build_accel.py</code>、<code>pyproject.toml</code>、<code>tests/</code>）</li>
+</ul>
+<div class="tip" style="margin-top:10px">配置文件我已经帮你写好：<code>.github/workflows/build.yml</code> 和更新过的 <code>.gitignore</code>。你只需要执行命令。</div>
+</div>
+
+<h2><span class="num">2</span>把项目推到 GitHub</h2>
+<p>在 <code>C:\Users\Administrator\Desktop\new-chat</code> 打开 PowerShell，依次执行：</p>
+<pre><code><span class="c"># 1. 初始化 git（只做一次）</span>
+<span class="g">git</span> init
+<span class="g">git</span> branch -M main
+
+<span class="c"># 2. 提交所有文件</span>
+<span class="g">git</span> add -A
+<span class="g">git</span> commit -m <span class="y">"gamekit2d 1.0.2: D3D11 fixed + GitHub Actions"</span>
+
+<span class="c"># 3. 关联你的 GitHub 仓库（只做一次）</span>
+<span class="g">git</span> remote add origin https://github.com/yuleemoon/gamekit2d.git
+
+<span class="c"># 4. 推上去（会提示输入 GitHub 账号密码或 Token）</span>
+<span class="g">git</span> push -u origin main</pre></code>
+<div class="warn">如果仓库里已经有内容（比如 README），先执行 <code>git pull origin main --allow-unrelated-histories</code> 再 push。</div>
+<div class="warn">GitHub 现在要求用 <b>Personal Access Token</b> 代替密码。不会生成的话：GitHub → Settings → Developer settings → Personal access tokens → Generate new token（勾选 <code>repo</code> 权限）。</div>
+
+<h2><span class="num">3</span>确认两个配置文件</h2>
+<h3>3.1 .gitignore</h3>
+<p>保证 <code>*.pyd / *.so / *.dll / dist/ / build/</code> 等编译产物和本地调试文件<b>不会</b>进仓库——CI 会在干净的机器上重新编译，仓库只存源码。</p>
+<h3>3.2 .github/workflows/build.yml</h3>
+<p>核心流程（每段干什么）：</p>
+<pre><code><span class="c"># 触发条件：打 v 开头的 tag，或手动点 Run workflow</span>
+on:
+  push:
+    tags: [<span class="y">"v*"</span>]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: <span class="y">windows-latest</span>   <span class="c"># GitHub 免费提供的 Windows 虚拟机</span>
+    steps:
+      - uses: actions/checkout@v4        <span class="c"># 把你的代码拷进虚拟机</span>
+      - uses: actions/setup-python@v5    <span class="c"># 装 Python 3.13</span>
+      - run: pip install build twine    <span class="c"># 装打包工具</span>
+      - run: python build_accel.py build_ext --inplace   <span class="c"># 编译 _accel/_d2d/_d3d11</span>
+      - run: python -m unittest discover -s tests -q     <span class="c"># 跑 39 个测试</span>
+      - run: python -m build            <span class="c"># 生成 wheel + sdist</span>
+      - run: python -m twine check dist/*   <span class="c"># 上传前自检</span>
+      - run: python -m twine upload dist/* --skip-existing   <span class="c"># 传到 PyPI</span>
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}</code></pre>
+
+<h2><span class="num">4</span>PyPI 生成 API Token（一次）</h2>
+<div class="step"><div class="badge">1</div><div>
+登录 <a href="https://pypi.org/manage/account/token/" style="color:var(--acc)">pypi.org → Account settings → API tokens</a>，点 <b>Add API token</b>。
+</div></div>
+<div class="step"><div class="badge">2</div><div>
+Scope 选 <b>Entire account</b>（或只勾 <code>gamekit2d</code> 项目），Token name 随便写，点创建。</div></div>
+<div class="step"><div class="badge">3</div><div>
+复制生成的 <code>pypi-xxxxxxxx</code> 一串字符串。<b>只显示一次，关掉就没了</b>。</div></div>
+<div class="danger">这个 token 就是你的 PyPI 密码，<b>不要</b>发到群里、贴进代码、commit 到仓库。</div>
+
+<h2><span class="num">5</span>把 Token 存进 GitHub Secret（一次）</h2>
+<div class="step"><div class="badge">1</div><div>打开 <code>github.com/yuleemoon/gamekit2d</code> → <b>Settings</b></div></div>
+<div class="step"><div class="badge">2</div><div>左侧 <b>Secrets and variables</b> → <b>Actions</b> → <b>New repository secret</b></div></div>
+<div class="step"><div class="badge">3</div><div>Name 填：<code>PYPI_TOKEN</code>　Value 粘贴第 4 步的 token → <b>Add secret</b></div></div>
+<div class="tip">名字必须和 workflow 里的 <code>secrets.PYPI_TOKEN</code> 完全一致，一个字母都不能差。</div>
+
+<h2><span class="num">6</span>发版：打 tag 触发自动发布</h2>
+<p>以后每次发新版，只需要三步：</p>
+<pre><code><span class="c"># 1. 先改版本号（两个地方，保持一样）</span>
+<span class="c">#    pyproject.toml  →  version = "1.0.3"</span>
+<span class="c">#    gamekit/__init__.py  →  __version__ = "1.0.3"</span>
+
+<span class="c"># 2. 提交并打 tag（tag 名字 = v + 版本号）</span>
+<span class="g">git</span> add -A
+<span class="g">git</span> commit -m <span class="y">"release 1.0.3"</span>
+<span class="g">git</span> tag v1.0.3
+
+<span class="c"># 3. 推送（tag 会触发 GitHub Actions）</span>
+<span class="g">git</span> push origin main
+<span class="g">git</span> push origin v1.0.3</code></pre>
+<p>也可以手动触发：仓库页面 → <b>Actions</b> → 左侧 <b>build-and-publish</b> → <b>Run workflow</b>（不打 tag 也能构建，适合测试）。</p>
+
+<h2><span class="num">7</span>验证发布成功</h2>
+<div class="card">
+<ol>
+  <li>仓库页面 → <b>Actions</b> → 看到 <b>绿色 ✓</b> = 构建通过；点进去看每一步日志</li>
+  <li>打开 <a href="https://pypi.org/project/gamekit2d/" style="color:var(--acc)">pypi.org/project/gamekit2d/</a>，能看到新版本号</li>
+  <li>随便开个终端验证：<code>pip install gamekit2d</code> → <code>python -c "import gamekit; print(gamekit.__version__)"</code></li>
+</ol>
+</div>
+
+<h2><span class="num">8</span>常见问题 & 下一步</h2>
+<h3>常见问题</h3>
+<table>
+  <tr><th>现象</th><th>原因 / 解决</th></tr>
+  <tr><td>上传报 <b>400 Bad Request</b></td><td>版本号已在 PyPI 存在。升版本号重新打 tag（PyPI 不允许覆盖同名版本）</td></tr>
+  <tr><td>报 <b>403 Forbidden</b></td><td>Secret 没配对 / Token 过期。检查 Settings → Secrets → PYPI_TOKEN</td></tr>
+  <tr><td>编译步骤红叉</td><td>点进日志看具体报错。C 代码改了要保证本地 <code>build_accel.py build_ext --inplace</code> 能过</td></tr>
+  <tr><td>Actions 没跑</td><td>确认 push 的是 <code>v*</code> 开头的 tag，或手动 Run workflow</td></tr>
+</table>
+
+<h3>下一步：三平台全自动（Linux / macOS 后端写好之后）</h3>
+<p>在 <code>build.yml</code> 里复制一个 job 改成：</p>
+<pre><code>  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install build twine
+      - run: python build_accel.py build_ext --inplace
+      - run: python -m unittest discover -s tests -q
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - run: python -m twine upload dist/* --skip-existing
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}</code></pre>
+<p>macOS 把 <code>ubuntu-latest</code> 换成 <code>macos-latest</code> 即可。GitHub 会同时开三台机器，一次 push 出三个平台的 wheel。</p>
+<div class="warn">注意：等 Linux/macOS 后端写好，还要把 wheel 标签改成平台专属（<code>win_amd64</code> / <code>manylinux</code> / <code>macosx</code>），否则跨平台用户会装到不匹配的包。这个到时再一起改。</div>
+
+<div class="footer">gamekit2d · 零依赖 2D 游戏库 · 教程配套文件：<code>.github/workflows/build.yml</code> + <code>.gitignore</code>（已放在项目里）</div>
+
+</div>
+</body>
+</html>

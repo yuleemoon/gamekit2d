@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gamekit tutorial — pygame, minus the boilerplate</title>
+<style>
+:root{
+  --bg:#0e1320; --panel:#151c2c; --panel2:#1b2436; --line:#263049;
+  --text:#dfe6f3; --muted:#8b96ab; --accent:#4ac0f0; --accent2:#ffd700;
+  --green:#6bff9c; --red:#ff6b6b; --code-bg:#0b0f19;
+  --kw:#c792ea; --str:#9ccc65; --cmt:#7c8aa5; --num:#f78c6c; --fn:#82aaff; --dec:#ffcb6b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;line-height:1.75;font-size:16px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:Consolas,"Courier New",monospace;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;font-size:.9em}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;margin:14px 0;line-height:1.6}
+pre code{background:none;padding:0;font-size:13.5px;display:block;white-space:pre}
+pre .lang{position:absolute;top:8px;right:12px;font-size:11px;color:var(--muted);letter-spacing:1px;user-select:none}
+.copy-btn{position:absolute;top:6px;right:40px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:6px;font-size:11px;padding:3px 10px;cursor:pointer}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent)}
+.tok-k{color:var(--kw);font-weight:600}.tok-s{color:var(--str)}.tok-c{color:var(--cmt);font-style:italic}
+.tok-n{color:var(--num)}.tok-d{color:var(--dec)}.tok-f{color:var(--fn)}
+.hero{background:linear-gradient(135deg,#0d1526 0%,#123 60%,#143a4d 100%);padding:52px 24px 40px;text-align:center;border-bottom:1px solid var(--line)}
+.hero .badge{display:inline-block;background:rgba(74,192,240,.12);color:var(--accent);border:1px solid rgba(74,192,240,.35);border-radius:20px;padding:4px 16px;font-size:13px;letter-spacing:1px}
+.hero h1{font-size:42px;margin:18px 0 6px;letter-spacing:1px}
+.hero .sub{color:var(--muted);font-size:17px}
+.hero-actions{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-block;background:var(--accent);color:#08131f;font-weight:600;padding:11px 24px;border-radius:8px;font-size:15px}
+.btn:hover{filter:brightness(1.12);text-decoration:none}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.layout{display:flex;max-width:1280px;margin:0 auto;padding:0 16px}
+.sidebar{width:250px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;max-height:100vh;overflow:auto;padding:24px 12px 24px 0;border-right:1px solid var(--line);margin-right:24px}
+.sidebar h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:0 0 10px}
+.sidebar a{display:block;color:var(--muted);font-size:13.5px;padding:5px 10px;border-radius:6px;border-left:2px solid transparent}
+.sidebar a:hover{color:var(--text);background:var(--panel)}
+.sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(74,192,240,.08)}
+.content{flex:1;min-width:0;padding:28px 8px 80px}
+section.chapter{margin-bottom:52px;scroll-margin-top:20px}
+.chapter h2{font-size:27px;margin-bottom:4px;color:#fff;border-bottom:2px solid var(--line);padding-bottom:12px}
+.chapter h2 .no{color:var(--accent2);font-weight:700}
+.chapter .ch-sub{color:var(--muted);font-size:14px;margin:6px 0 18px}
+.chapter h3{font-size:20px;margin:30px 0 10px;color:var(--accent)}
+.chapter h4{font-size:16px;margin:22px 0 8px;color:var(--text)}
+.chapter p{margin:10px 0}
+.chapter ul,.chapter ol{margin:10px 0 10px 24px}
+.chapter li{margin:5px 0}
+.note{border-left:4px solid var(--accent);background:rgba(74,192,240,.08);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:15px}
+.note.warn{border-left-color:var(--accent2);background:rgba(255,215,0,.07)}
+.note.danger{border-left-color:var(--red);background:rgba(255,107,107,.08)}
+.note b{color:var(--accent)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.8px}
+th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--accent);font-weight:600}
+td code{white-space:nowrap}
+.fig{margin:20px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;overflow:auto}
+.fig .cap{text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
+.fig svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.arch{display:flex;flex-direction:column;gap:8px;max-width:760px;margin:16px auto}
+.arch .layer{border:1px solid var(--line);border-radius:10px;padding:12px 16px;background:var(--panel2)}
+.arch .layer .lt{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.arch .layer .lc{font-size:15px;margin-top:4px}
+.arch .arrow{text-align:center;color:var(--accent);font-size:20px;line-height:1}
+footer{border-top:1px solid var(--line);padding:26px;text-align:center;color:var(--muted);font-size:14px}
+.topnav{display:none}
+@media(max-width:920px){
+  .sidebar{display:none}
+  .topnav{display:block;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;padding:8px 12px}
+  .topnav a{display:inline-block;color:var(--muted);font-size:13px;padding:8px 12px;border-radius:6px}
+  .hero h1{font-size:30px}
+  body{font-size:15px}
+  .content{padding:20px 4px 60px}
+  .layout{padding:0 10px}
+  pre{font-size:12px}
+  table{font-size:12.5px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hero">
+    <div class="badge">gamekit · a 2D game library with zero third-party deps</div>
+    <h1>pygame, minus the boilerplate</h1>
+    <div class="sub">A full tutorial, 16 chapters, every snippet runs as-is</div>
+    <div class="hero-actions">
+      <a class="btn" href="#ch15">&#128640; Skip to the game: space shooter</a>
+      <a class="btn ghost" href="#ch0">Start at the beginning</a>
+    </div>
+  </div>
+  <nav class="topnav" id="topnav">
+    <a href="#ch0">0 map</a><a href="#ch1">1 window</a><a href="#ch2">2 loop</a>
+    <a href="#ch3">3 sprites</a><a href="#ch4">4 move</a><a href="#ch5">5 input</a>
+    <a href="#ch6">6 collision</a><a href="#ch7">7 text</a><a href="#ch8">8 UI</a>
+    <a href="#ch9">9 shapes</a><a href="#ch10">10 images</a><a href="#ch11">11 sound</a>
+    <a href="#ch12">12 particles</a><a href="#ch13">13 scenes</a><a href="#ch14">14 vec2</a>
+    <a href="#ch15">15 game</a><a href="#ch16">16 FAQ</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h3>Contents</h3>
+    <a href="#ch0">0 · What gamekit covers</a>
+    <a href="#ch1">1 · Your first window</a>
+    <a href="#ch2">2 · The game loop</a>
+    <a href="#ch3">3 · Sprites</a>
+    <a href="#ch4">4 · Movement</a>
+    <a href="#ch5">5 · Input</a>
+    <a href="#ch6">6 · Collision</a>
+    <a href="#ch7">7 · Text and fonts</a>
+    <a href="#ch8">8 · UI widgets</a>
+    <a href="#ch9">9 · Drawing shapes</a>
+    <a href="#ch10">10 · Images and animation</a>
+    <a href="#ch11">11 · Sound</a>
+    <a href="#ch12">12 · Particles</a>
+    <a href="#ch13">13 · Scenes</a>
+    <a href="#ch14">14 · Vec2 and colors</a>
+    <a href="#ch15">15 · Full game: space shooter</a>
+    <a href="#ch16">16 · FAQ and gotchas</a>
+  </aside>
+
+  <main class="content">
+
+    <!-- ========== ch0 ========== -->
+    <section class="chapter" id="ch0">
+      <h2><span class="no">Chapter 0</span> What gamekit covers</h2>
+      <div class="ch-sub">An honest map from pygame to gamekit, before any code</div>
+      <p>You want to make a 2D game, but every time you open the pygame docs you
+      spend an hour setting up a window and an event loop before anything moves
+      on screen.</p>
+      <p>gamekit is the opposite. One class, a handful of methods, zero third-party
+      dependencies — it runs on the standard library (tkinter for rendering and
+      input, winsound for audio). You still get what pygame gives you: sprites,
+      input, collisions, images, fonts, sound, shapes, timing, scenes. The code
+      you write is about a third of the size.</p>
+      <p>Install it, then continue:</p>
+<pre><code class="bash"><span class="lang">SHELL</span>pip install gamekit</code></pre>
+      <div class="fig">
+        <div class="arch">
+          <div class="layer"><div class="lt">Your code</div><div class="lc">sprites, rules, feel — the only layer you write</div></div>
+          <div class="arrow">&#8595;</div>
+          <div class="layer"><div class="lt">gamekit API</div><div class="lc"><code>game.sprite()</code> · <code>@game.on_key</code> · <code>@game.on_collide</code> · <code>game.run()</code></div></div>
+          <div class="arrow">&#8595;</div>
+          <div class="layer"><div class="lt">Engine modules, all hand-written</div><div class="lc">core · sprites · physics · audio · ui · fx · utils</div></div>
+          <div class="arrow">&#8595;</div>
+          <div class="layer"><div class="lt">Standard library only</div><div class="lc">tkinter (render / input) · winsound (audio) · math / random / time</div></div>
+        </div>
+        <div class="cap">gamekit's stack (illustration). The bottom layers are hidden; you face a tiny API.</div>
+      </div>
+      <h3>The pygame feature map</h3>
+      <p>If you know pygame, this table is the cheat sheet. Every row is covered
+      later in the tutorial.</p>
+      <table>
+        <tr><th>pygame</th><th>gamekit</th><th>Notes</th></tr>
+        <tr><td><code>pygame.display.set_mode</code></td><td><code>Game(width=, height=)</code></td><td>add <code>fps=</code></td></tr>
+        <tr><td><code>display.set_caption</code></td><td><code>Game(title=)</code></td><td></td></tr>
+        <tr><td><code>event.get()</code> / <code>KEYDOWN</code></td><td><code>@game.on_key(Key.X)</code></td><td>fires once per press</td></tr>
+        <tr><td><code>key.get_pressed()</code></td><td><code>game.is_key_down(Key.X)</code></td><td>hold-state inside <code>on_update</code></td></tr>
+        <tr><td><code>KEYUP</code></td><td><code>@game.on_key_up(Key.X)</code></td><td></td></tr>
+        <tr><td><code>MOUSEMOTION</code></td><td><code>@game.on_mouse_move</code></td><td></td></tr>
+        <tr><td><code>MOUSEBUTTONDOWN/UP</code></td><td><code>@game.on_mouse_down/up</code></td><td></td></tr>
+        <tr><td><code>mouse.get_pos()</code></td><td><code>game.mouse_x, game.mouse_y</code></td><td></td></tr>
+        <tr><td><code>Sprite</code> + <code>Group</code></td><td><code>game.sprite()</code> + <code>tag=</code></td><td>tags replace groups</td></tr>
+        <tr><td><code>sprite.collide_rect</code></td><td><code>sprite.collides_with(other)</code></td><td></td></tr>
+        <tr><td><code>sprite.collide_circle</code></td><td>same call</td><td>circles auto-detect circles</td></tr>
+        <tr><td><code>draw.rect</code></td><td><code>game.sprite(..., shape="rect")</code></td><td></td></tr>
+        <tr><td><code>draw.circle</code></td><td><code>game.sprite(..., shape="circle")</code></td><td></td></tr>
+        <tr><td><code>draw.line</code></td><td><code>game.line(...)</code></td><td></td></tr>
+        <tr><td><code>draw.polygon</code></td><td><code>game.polygon(...)</code></td><td></td></tr>
+        <tr><td><code>draw.ellipse</code></td><td><code>game.ellipse(...)</code></td><td></td></tr>
+        <tr><td><code>draw.arc</code></td><td><code>game.arc(...)</code></td><td></td></tr>
+        <tr><td><code>draw.lines</code></td><td><code>game.polygon(..., outline=...)</code></td><td></td></tr>
+        <tr><td><code>image.load</code></td><td><code>game.sprite("file.png")</code></td><td>PNG/GIF/BMP/PPM, no JPG</td></tr>
+        <tr><td><code>transform.scale</code></td><td><code>sprite.set_scale(1.5)</code></td><td></td></tr>
+        <tr><td><code>transform.rotate</code></td><td><code>sprite.set_angle(45)</code></td><td>degrees</td></tr>
+        <tr><td><code>transform.flip</code></td><td><code>sprite.flip(horizontal=True)</code></td><td></td></tr>
+        <tr><td><code>image.save</code></td><td><code>sprite.save_image("out.ppm")</code></td><td>PPM/GIF/BMP</td></tr>
+        <tr><td><code>font.Font.render</code></td><td><code>game.text(...)</code> + <code>.set(...)</code></td><td>update, don't recreate</td></tr>
+        <tr><td><code>mixer.Sound.play</code></td><td><code>game.sound("hit.wav").play()</code></td><td>WAV, Windows</td></tr>
+        <tr><td><code>mixer.music</code></td><td><code>game.music("bgm.wav")</code></td><td>loops by default</td></tr>
+        <tr><td><code>time.Clock.tick</code></td><td><code>fps=60</code></td><td>handled for you</td></tr>
+        <tr><td><code>time.get_ticks</code></td><td><code>game.time</code></td><td>seconds, not ms</td></tr>
+        <tr><td><code>mask</code></td><td><code>pixel_collide(a, b)</code></td><td>pixel-perfect</td></tr>
+        <tr><td><code>math.Vector2</code></td><td><code>Vec2</code></td><td></td></tr>
+        <tr><td><code>Rect</code></td><td><code>sprite.left/right/top/bottom</code></td><td></td></tr>
+        <tr><td><code>Color</code></td><td><code>Color</code>, named constants</td><td></td></tr>
+        <tr><td><code>QUIT</code></td><td>automatic</td><td>closing stops the game</td></tr>
+        <tr><td><code>joystick</code></td><td>—</td><td>no gamepad in stdlib</td></tr>
+        <tr><td><code>camera</code></td><td>—</td><td>no webcam in stdlib</td></tr>
+        <tr><td><code>Surface</code> + <code>blit</code></td><td>sprites or the <code>on_draw</code> hook</td><td></td></tr>
+      </table>
+      <div class="note warn"><b>Two honest limits.</b> Audio works on Windows only
+      (winsound); elsewhere <code>play()</code> prints a note and the game keeps
+      running. And there's no gamepad or webcam support — the standard library
+      has neither. For those two, keep pygame. For everything else on the table,
+      keep reading.</div>
+    </section>
+
+    <!-- ========== ch1 ========== -->
+    <section class="chapter" id="ch1">
+      <h2><span class="no">Chapter 1</span> Your first window</h2>
+      <div class="ch-sub">Three lines and you have a game running</div>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Game
+
+game = Game(title="Hello", width=640, height=480, fps=60)
+game.run()</code></pre>
+      <p>Run <code>python hello.py</code>. A dark window opens and stays. That's
+      a game — the loop is already running, drawing the background 60 times a
+      second.</p>
+      <p>The <code>Game</code> object is the whole library. You create sprites
+      through it, register callbacks on it, and start everything with one
+      <code>run()</code> call.</p>
+    </section>
+
+    <!-- ========== ch2 ========== -->
+    <section class="chapter" id="ch2">
+      <h2><span class="no">Chapter 2</span> The game loop</h2>
+      <div class="ch-sub">What actually happens 60 times a second</div>
+      <p>Every game is a loop. Each pass does three things:</p>
+      <div class="fig">
+        <svg viewBox="0 0 760 190" role="img" aria-label="Game loop: read input, update world, draw frame, repeat">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ac0f0"/></marker>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffd700"/></marker>
+          </defs>
+          <rect x="30" y="55" width="200" height="78" rx="12" fill="#1b2436" stroke="#4ac0f0" stroke-width="1.5"/>
+          <text x="130" y="88" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">1. Read input</text>
+          <text x="130" y="112" text-anchor="middle" fill="#8b96ab" font-size="12">keys · mouse</text>
+          <rect x="280" y="55" width="200" height="78" rx="12" fill="#1b2436" stroke="#4ac0f0" stroke-width="1.5"/>
+          <text x="380" y="88" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">2. Update world</text>
+          <text x="380" y="112" text-anchor="middle" fill="#8b96ab" font-size="12">move · collide · score</text>
+          <rect x="530" y="55" width="200" height="78" rx="12" fill="#1b2436" stroke="#4ac0f0" stroke-width="1.5"/>
+          <text x="630" y="88" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">3. Draw frame</text>
+          <text x="630" y="112" text-anchor="middle" fill="#8b96ab" font-size="12">paint sprites on screen</text>
+          <line x1="230" y1="94" x2="278" y2="94" stroke="#4ac0f0" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="480" y1="94" x2="528" y2="94" stroke="#4ac0f0" stroke-width="2" marker-end="url(#arr)"/>
+          <path d="M 630 133 L 630 160 L 130 160 L 130 135" fill="none" stroke="#ffd700" stroke-width="2" marker-end="url(#arr2)" stroke-dasharray="6,4"/>
+          <text x="380" y="177" text-anchor="middle" fill="#ffd700" font-size="13">&#8635; repeat every frame (fps times a second)</text>
+        </svg>
+        <div class="cap">The game loop: read input → update world → draw frame</div>
+      </div>
+      <p>gamekit runs this loop for you at your <code>fps</code>. You write the
+      "update world" part — and even that is optional at first.</p>
+      <p>Three values you'll use constantly:</p>
+      <ul>
+        <li><code>game.time</code> — seconds since start (like
+        <code>pygame.time.get_ticks</code>, but in seconds).</li>
+        <li><code>game.dt</code> — how long the last frame took, in seconds.
+        Every update callback gets it.</li>
+        <li><code>fps</code> — loop iterations per second.</li>
+      </ul>
+      <div class="note"><b>The rule that keeps your game sane:</b> think in
+      pixels per second, never pixels per frame. Don't write "move 10 pixels
+      every frame". Write "move 300 pixels per second" and multiply by
+      <code>dt</code>. Then 60 fps and 30 fps feel identical. gamekit's built-in
+      velocity does this for you.</div>
+    </section>
+
+    <!-- ========== ch3 ========== -->
+    <section class="chapter" id="ch3">
+      <h2><span class="no">Chapter 3</span> Sprites</h2>
+      <div class="ch-sub">The thing you see on screen</div>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Game
+
+game = Game(title="Sprites", width=640, height=480)
+
+<span class="tok-c"># A red square, centre at (320, 240)</span>
+box = game.sprite(color="red", x=320, y=240, width=80, height=80)
+
+<span class="tok-c"># A gold circle</span>
+ball = game.sprite(color="gold", x=100, y=100, width=40, height=40, shape="circle")
+
+game.run()</code></pre>
+      <p>Coordinates work like pygame: (0, 0) is top-left, x grows right, y
+      grows down. <code>x</code> and <code>y</code> are the sprite's centre.</p>
+<pre><code class="python"><span class="lang">PYTHON</span>player = game.sprite(color="skyblue", x=100, y=100, width=60, height=60,
+                     shape="rect", tag="player", layer=0)
+
+player.x, player.y          <span class="tok-c"># position (centre)</span>
+player.vx, player.vy        <span class="tok-c"># velocity, px/s</span>
+player.width, player.height <span class="tok-c"># size</span>
+player.visible              <span class="tok-c"># True/False</span>
+player.layer                <span class="tok-c"># draw order, bigger on top</span>
+player.tag                  <span class="tok-c"># label for groups</span>
+player.solid                <span class="tok-c"># takes part in collisions</span></code></pre>
+      <p>Two shapes: <code>"rect"</code> (default) and <code>"circle"</code>. A
+      circle sprite collides as a circle, not as a box. Image sprites ignore
+      <code>shape</code> — the image sets the size.</p>
+      <p><code>tag</code> is your group. In pygame you'd make a <code>Group</code>
+      for bullets; here you tag every bullet and match them at once:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>enemies = game.find("enemy")   <span class="tok-c"># all sprites tagged "enemy"</span></code></pre>
+    </section>
+
+    <!-- ========== ch4 ========== -->
+    <section class="chapter" id="ch4">
+      <h2><span class="no">Chapter 4</span> Movement</h2>
+      <div class="ch-sub">Velocity, gravity, friction, bounce — and manual control</div>
+      <p>Set a velocity and the sprite moves itself. No manual
+      <code>x += speed</code> needed.</p>
+<pre><code class="python"><span class="lang">PYTHON</span>game = Game(width=640, height=480)
+
+ball = game.sprite(color="gold", x=320, y=240, width=30, height=30, shape="circle")
+ball.vx = 200     <span class="tok-c"># 200 px/s right</span>
+ball.vy = 150     <span class="tok-c"># 150 px/s down</span>
+ball.bounce = 1.0 <span class="tok-c"># bounce off screen edges</span>
+
+game.run()</code></pre>
+      <p><code>bounce</code> takes 0 to 1. <code>0.5</code> loses half the
+      speed each bounce. Default 0 flies off screen forever.</p>
+      <h3>Physics flags</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>game.gravity = 500          <span class="tok-c"># px/s², only affects gravity_scale &gt; 0</span>
+
+ball = game.sprite(color="cyan", x=320, y=100, width=20, height=20, shape="circle")
+ball.gravity_scale = 1.0    <span class="tok-c"># 0 = ignore gravity, 2.0 = falls twice as fast</span>
+ball.bounce = 0.8           <span class="tok-c"># bounce off the floor</span>
+ball.friction = 0.5         <span class="tok-c"># velocity decays</span>
+ball.keep_on_screen = True  <span class="tok-c"># stop at edges instead of bouncing</span></code></pre>
+      <p>Pick one of <code>bounce</code> or <code>keep_on_screen</code>. One
+      bounces, the other stops.</p>
+      <h3>Manual control</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_update
+<span class="tok-k">def</span> tick(dt):
+    player.x += 300 * dt              <span class="tok-c"># constant rightward speed</span>
+
+    player.x = game.mouse_x           <span class="tok-c"># follow the mouse</span>
+    player.y = game.mouse_y
+
+    <span class="tok-k">import</span> math
+    player.x = 320 + math.cos(game.time * 2) * 150   <span class="tok-c"># orbit</span>
+    player.y = 240 + math.sin(game.time * 2) * 150</code></pre>
+      <p><code>move(dx, dy)</code> shifts relative, <code>move_to(x, y)</code>
+      jumps to a point, <code>look_at(other)</code> points at a sprite or a
+      <code>(x, y)</code> tuple.</p>
+    </section>
+
+    <!-- ========== ch5 ========== -->
+    <section class="chapter" id="ch5">
+      <h2><span class="no">Chapter 5</span> Input</h2>
+      <div class="ch-sub">Keys, hold state, and the mouse</div>
+      <h3>Fire once</h3>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Game, Key
+
+@game.on_key(Key.SPACE)
+<span class="tok-k">def</span> jump():
+    player.vy = -400
+
+@game.on_key(Key.ESC)
+<span class="tok-k">def</span> quit_game():
+    game.stop()
+
+@game.on_key("a")       <span class="tok-c"># letters work as plain strings</span>
+<span class="tok-k">def</span> move_left():
+    player.vx = -300</code></pre>
+      <p>Key constants: <code>Key.SPACE</code>, <code>UP/DOWN/LEFT/RIGHT</code>,
+      <code>ENTER</code>, <code>ESC</code>, <code>TAB</code>,
+      <code>SHIFT/CTRL/ALT</code>, <code>F1</code>–<code>F12</code>, plus
+      <code>"a"</code>–<code>"z"</code> and <code>"0"</code>–<code>"9"</code>.</p>
+      <h3>Hold state — the one you'll use most</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_key_hold(Key.LEFT)
+<span class="tok-k">def</span> left():
+    player.vx = -300
+
+@game.on_key_hold(Key.RIGHT)
+<span class="tok-k">def</span> right():
+    player.vx = 300
+
+@game.on_key_up(Key.LEFT)     <span class="tok-c"># fires on release</span>
+<span class="tok-k">def</span> stop_left():
+    player.vx = 0</code></pre>
+      <p>Or check the held state inside <code>on_update</code>, which some
+      people find cleaner:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_update
+<span class="tok-k">def</span> tick(dt):
+    <span class="tok-k">if</span> game.is_key_down(Key.LEFT):
+        player.vx = -300
+    <span class="tok-k">elif</span> game.is_key_down(Key.RIGHT):
+        player.vx = 300
+    <span class="tok-k">else</span>:
+        player.vx = 0</code></pre>
+      <h3>Mouse</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_mouse_click       <span class="tok-c"># left click, fn(x, y)</span>
+<span class="tok-k">def</span> click(x, y):
+    print("clicked", x, y)
+
+@game.on_mouse_move        <span class="tok-c"># fn(x, y)</span>
+@game.on_mouse_down        <span class="tok-c"># any button, fn(x, y, button)</span>
+@game.on_mouse_up          <span class="tok-c"># any release, fn(x, y, button)</span>
+@game.on_mouse_wheel       <span class="tok-c"># fn(delta, x, y)</span></code></pre>
+      <p>Position is always readable: <code>game.mouse_x</code>,
+      <code>game.mouse_y</code>. A paddle that follows the mouse is three
+      lines:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_update
+<span class="tok-k">def</span> tick(dt):
+    paddle.x = game.mouse_x</code></pre>
+    </section>
+
+    <!-- ========== ch6 ========== -->
+    <section class="chapter" id="ch6">
+      <h2><span class="no">Chapter 6</span> Collision</h2>
+      <div class="ch-sub">Rectangles, circles, callbacks, and pixel-perfect</div>
+      <p>Collision detection is one question: do these two shapes overlap?</p>
+      <div class="fig">
+        <svg viewBox="0 0 760 170" role="img" aria-label="Collision: overlap means hit">
+          <rect x="40" y="30" width="90" height="70" rx="6" fill="#1b2436" stroke="#4ac0f0" stroke-width="2"/>
+          <rect x="95" y="55" width="90" height="70" rx="6" fill="#1b2436" stroke="#4ac0f0" stroke-width="2"/>
+          <text x="115" y="145" text-anchor="middle" fill="#6bff9c" font-size="15" font-weight="700">Overlap = hit</text>
+          <rect x="330" y="30" width="90" height="70" rx="6" fill="#1b2436" stroke="#ff6b6b" stroke-width="2"/>
+          <rect x="470" y="30" width="90" height="70" rx="6" fill="#1b2436" stroke="#ff6b6b" stroke-width="2"/>
+          <text x="415" y="145" text-anchor="middle" fill="#ff6b6b" font-size="15" font-weight="700">Apart = no hit</text>
+          <circle cx="620" cy="65" r="34" fill="#1b2436" stroke="#4ac0f0" stroke-width="2"/>
+          <circle cx="690" cy="65" r="34" fill="#1b2436" stroke="#4ac0f0" stroke-width="2"/>
+          <text x="655" y="145" text-anchor="middle" fill="#6bff9c" font-size="15" font-weight="700">Circle: distance &lt; radii sum = hit</text>
+        </svg>
+        <div class="cap">Rect and circle collision (illustration)</div>
+      </div>
+      <h3>Check manually</h3>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">if</span> player.collides_with(enemy):
+    print("hit")
+
+<span class="tok-k">if</span> player.contains(x, y):      <span class="tok-c"># is a point inside?</span>
+    print("pointer on player")
+
+d = player.distance_to(enemy)  <span class="tok-c"># centre distance</span></code></pre>
+      <h3>Automatically, with a callback</h3>
+      <p><code>@game.on_collide(a, b)</code> fires <b>once, the moment two
+      objects start touching</b> — not every frame. That's what you want for
+      "ate a coin" or "bullet hit an enemy".</p>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-c"># Two specific sprites</span>
+@game.on_collide(player, coin)
+<span class="tok-k">def</span> collect(p, c):
+    c.remove()
+
+<span class="tok-c"># A sprite against a tag — every sprite tagged "coin"</span>
+@game.on_collide(player, "coin")
+<span class="tok-k">def</span> collect(p, c):
+    c.remove()
+
+<span class="tok-c"># Tag against tag — how shooting works</span>
+@game.on_collide("bullet", "enemy")
+<span class="tok-k">def</span> hit(bullet, enemy):
+    bullet.remove()
+    enemy.remove()</code></pre>
+      <h3>Bounce off something</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_collide(ball, brick)
+<span class="tok-k">def</span> hit(ball, brick):
+    brick.remove()
+    ball.bounce_off(brick)   <span class="tok-c"># flips vx or vy based on which side hit</span></code></pre>
+      <h3>Pixel-perfect collision</h3>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> pixel_collide
+
+<span class="tok-k">if</span> pixel_collide(player, coin):   <span class="tok-c"># both must be image sprites</span>
+    coin.remove()</code></pre>
+      <p>Rectangles lie at the corners. When that matters,
+      <code>pixel_collide</code> compares actual pixels: both images need a
+      non-transparent pixel at the same spot. No image? It falls back to a
+      rectangle check.</p>
+      <h3>Jump and land</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>game.gravity = 600
+player.gravity_scale = 1.0
+ground = game.sprite(color="gray", x=320, y=580, width=640, height=40)
+
+@game.on_collide(player, ground)
+<span class="tok-k">def</span> land(p, g):
+    <span class="tok-k">if</span> p.vy &gt; 0:                 <span class="tok-c"># only land while falling</span>
+        p.y = g.top - p.height / 2
+        p.vy = 0</code></pre>
+    </section>
+
+    <!-- ========== ch7 ========== -->
+    <section class="chapter" id="ch7">
+      <h2><span class="no">Chapter 7</span> Text and fonts</h2>
+      <div class="ch-sub">Create once, update with .set()</div>
+<pre><code class="python"><span class="lang">PYTHON</span>title = game.text("Score: 0", x=320, y=30, size=28, color="white",
+                  bold=True, anchor="center")</code></pre>
+      <ul>
+        <li><code>x, y</code> — position</li>
+        <li><code>size</code>, <code>color</code> — obvious</li>
+        <li><code>font</code> — family, default has solid CJK support</li>
+        <li><code>bold=True</code>, <code>italic=True</code> — both work</li>
+        <li><code>anchor</code> — <code>"center"</code> (default),
+        <code>"nw"</code>, <code>"n"</code>, …</li>
+      </ul>
+      <p>The one habit that matters:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>score = 0
+score_text = game.text("Score: 0", x=320, y=30, size=28)
+
+@game.on_collide(player, "coin")
+<span class="tok-k">def</span> collect(p, c):
+    <span class="tok-k">global</span> score
+    score += 10
+    c.remove()
+    score_text.set("Score: %d" % score)   <span class="tok-c"># update in place</span></code></pre>
+      <p>Calling <code>game.text()</code> every frame to "update" text creates
+      objects and runs slow. One object, one <code>.set()</code> per change.</p>
+    </section>
+
+    <!-- ========== ch8 ========== -->
+    <section class="chapter" id="ch8">
+      <h2><span class="no">Chapter 8</span> UI widgets</h2>
+      <div class="ch-sub">Buttons with hover, progress bars with ratios</div>
+<pre><code class="python"><span class="lang">PYTHON</span>game.button("Start", x=320, y=300, width=180, height=52,
+            on_click=start_game)     <span class="tok-c"># fn(button)</span>
+
+<span class="tok-k">def</span> start_game(button):
+    button.text = "Running"</code></pre>
+<pre><code class="python"><span class="lang">PYTHON</span>hp = game.progress_bar(x=320, y=30, width=300, height=20,
+                       value=100, max_value=100, color="lime")
+
+hp.set_value(60)      <span class="tok-c"># converts to a ratio automatically</span></code></pre>
+      <p>Buttons highlight on hover and fire <code>on_click</code> on release.
+      Progress bars are made for health bars, XP bars, and timers.</p>
+    </section>
+
+    <!-- ========== ch9 ========== -->
+    <section class="chapter" id="ch9">
+      <h2><span class="no">Chapter 9</span> Drawing shapes (pygame.draw)</h2>
+      <div class="ch-sub">Lines, polygons, ellipses, arcs</div>
+      <p>Sprites are solid rectangles and circles. For a line, polygon,
+      ellipse, or arc, use the shape functions. Shapes are managed like sprites
+      — movable, layerable, removable — but they stay visual: <b>shapes don't
+      collide</b>. If it needs to collide, make it a sprite.</p>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-c"># Line from (x1, y1) to (x2, y2)</span>
+game.line(x1=100, y1=400, x2=300, y2=400, color="white", width=3)
+
+<span class="tok-c"># Polygon from a list of points</span>
+game.polygon([(400, 400), (440, 350), (480, 400)],
+             color="violet", outline=<span class="tok-k">None</span>)
+
+<span class="tok-c"># Ellipse (or circle) centred at (x, y)</span>
+game.ellipse(x=120, y=250, width=80, height=40, color="skyblue")
+
+<span class="tok-c"># Arc — start and extent in degrees, 0 = right, clockwise</span>
+game.arc(x=560, y=250, width=60, height=60,
+         start=0, extent=270, color="lime", width_px=3)</code></pre>
+      <p>Every shape returns an object with <code>x, y, vx, vy, visible, layer,
+      tag</code> and <code>remove()</code>. Give a line a velocity and it
+      drifts. Give a polygon a tag and you can find it later.</p>
+    </section>
+
+    <!-- ========== ch10 ========== -->
+    <section class="chapter" id="ch10">
+      <h2><span class="no">Chapter 10</span> Images and animation</h2>
+      <div class="ch-sub">Load, scale, rotate, flip, save, animate</div>
+<pre><code class="python"><span class="lang">PYTHON</span>player = game.sprite("player.png", x=320, y=240)  <span class="tok-c"># path as first arg</span>
+player.set_scale(1.5)     <span class="tok-c"># 1.5x</span>
+player.set_angle(45)      <span class="tok-c"># 45 degrees</span>
+player.flip(horizontal=True)   <span class="tok-c"># mirror it</span>
+player.set_image("other.png")  <span class="tok-c"># swap image</span></code></pre>
+      <p>Supported formats: <b>PNG, GIF, BMP, PPM</b>. No JPG — tkinter can't
+      read it. Rotation and non-integer scaling resample pixels on the fly:
+      fine at load time for a few sprites, slow if you re-rotate a huge image
+      every frame.</p>
+      <h3>Save an image</h3>
+<pre><code class="python"><span class="lang">PYTHON</span>player.save_image("out.ppm")    <span class="tok-c"># pygame.image.save</span></code></pre>
+      <p>PPM, GIF, and BMP work. PNG doesn't, because the standard library
+      can't write it.</p>
+      <h3>Frame animation</h3>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-c"># Two frames of a coin flashing, 4 fps, looping</span>
+coin = game.sprite("coin1.png", x=320, y=200)
+coin.play(["coin1.png", "coin2.png"], fps=4, loop=True)
+
+coin.stop_animation()</code></pre>
+      <p>The example assets come from <code>examples/make_assets.py</code>,
+      which draws PNGs using only the standard library.</p>
+    </section>
+
+    <!-- ========== ch11 ========== -->
+    <section class="chapter" id="ch11">
+      <h2><span class="no">Chapter 11</span> Sound</h2>
+      <div class="ch-sub">WAV effects and looping music</div>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-c"># Play once</span>
+hit = game.sound("hit.wav")
+hit.play()
+
+<span class="tok-c"># Looping background music</span>
+music = game.music("bgm.wav")    <span class="tok-c"># same as game.sound(path, loop=True)</span>
+
+music.stop()</code></pre>
+      <p>That's the whole API. The constraints are real, so repeat them:</p>
+      <ul>
+        <li><b>WAV only.</b> The standard library decodes wav and nothing else.</li>
+        <li><b>Windows only.</b> <code>winsound</code> is Windows. Elsewhere,
+        <code>play()</code> prints a note and continues.</li>
+        <li><b>One sound at a time.</b> Music and effects can't overlap. For
+        layered audio, pygame is the better tool.</li>
+      </ul>
+    </section>
+
+    <!-- ========== ch12 ========== -->
+    <section class="chapter" id="ch12">
+      <h2><span class="no">Chapter 12</span> Particles</h2>
+      <div class="ch-sub">gamekit's own extra: explosions and sparks</div>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-c"># One-shot explosion</span>
+game.burst(x=320, y=240, count=40,
+           colors=("orange", "yellow", "red"),   <span class="tok-c"># picked at random</span>
+           speed=(50, 260),        <span class="tok-c"># initial speed range, px/s</span>
+           life=(0.4, 1.5))        <span class="tok-c"># lifetime range, seconds</span>
+
+<span class="tok-c"># A system you can trigger repeatedly</span>
+stars = game.particles(x=320, y=200, count=30, colors=("white", "cyan"))
+stars.burst()              <span class="tok-c"># fire a batch</span>
+stars.burst(count=60)      <span class="tok-c"># or specify how many</span></code></pre>
+      <p>A burst in a collision callback is the fastest way to make a hit feel
+      good:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>@game.on_collide("bullet", "enemy")
+<span class="tok-k">def</span> hit(bullet, enemy):
+    game.burst(enemy.x, enemy.y, count=20, colors=("orange", "yellow"))
+    bullet.remove()
+    enemy.remove()</code></pre>
+    </section>
+
+    <!-- ========== ch13 ========== -->
+    <section class="chapter" id="ch13">
+      <h2><span class="no">Chapter 13</span> Scenes</h2>
+      <div class="ch-sub">Menu, play, game over — as separate scenes</div>
+      <p>A scene owns its sprites, text, buttons, and particles. Switching
+      scenes swaps them out.</p>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Game, Scene
+
+<span class="tok-k">class</span> MenuScene(Scene):
+    <span class="tok-k">def</span> on_enter(self, game):          <span class="tok-c"># build the scene here</span>
+        game.text("My Game", x=320, y=200, size=48, bold=True)
+        game.button("Start", x=320, y=320, on_click=self.start)
+
+    <span class="tok-k">def</span> start(self, button):
+        self.game.switch_scene(GameScene())
+
+    <span class="tok-k">def</span> on_exit(self):                 <span class="tok-c"># leave the scene here</span>
+        self.clear()
+
+<span class="tok-k">class</span> GameScene(Scene):
+    <span class="tok-k">def</span> on_enter(self, game):
+        self.player = game.sprite(color="cyan", x=320, y=400, width=50, height=50)
+
+    <span class="tok-k">def</span> on_update(self, dt):
+        ...
+
+game = Game(width=640, height=480)
+game.switch_scene(MenuScene())
+game.run()</code></pre>
+      <ul>
+        <li><code>on_enter</code> creates everything; <code>on_exit</code> cleans up.</li>
+        <li>Collision callbacks are wiped on every scene switch — register the
+        ones you need inside <code>on_enter</code>. Key, mouse, and update
+        callbacks are global and survive.</li>
+        <li><code>game.switch_scene(Scene)</code> calls old <code>on_exit</code>,
+        then new <code>on_enter</code>.</li>
+      </ul>
+    </section>
+
+    <!-- ========== ch14 ========== -->
+    <section class="chapter" id="ch14">
+      <h2><span class="no">Chapter 14</span> Vec2 and colors</h2>
+      <div class="ch-sub">The math you'll actually do</div>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Vec2
+
+v = Vec2(3, 4)
+v.length()          <span class="tok-c"># 5.0</span>
+v.normalized()      <span class="tok-c"># unit vector</span>
+v2 = Vec2.from_angle(45, 10)   <span class="tok-c"># 10 px/s at 45 degrees</span>
+v.rotated(90)       <span class="tok-c"># rotate a vector</span>
+v.dot(other)        <span class="tok-c"># dot product</span></code></pre>
+      <p>Pointing a bullet at the player:</p>
+<pre><code class="python"><span class="lang">PYTHON</span>direction = (Vec2(enemy.x, enemy.y) - Vec2(player.x, player.y)).normalized()
+bullet.vx = direction.x * 300
+bullet.vy = direction.y * 300</code></pre>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">from</span> gamekit <span class="tok-k">import</span> RED, to_color, mix
+
+sprite.color = RED                 <span class="tok-c"># a named constant</span>
+sprite.color = (255, 100, 0)       <span class="tok-c"># an (r, g, b) tuple</span>
+sprite.color = "#ff6400"           <span class="tok-c"># a hex string</span>
+sprite.color = mix("red", "blue", 0.5)   <span class="tok-c"># halfway between</span></code></pre>
+      <p>Any API that takes a color accepts all three forms.</p>
+    </section>
+
+    <!-- ========== ch15 ========== -->
+    <section class="chapter" id="ch15">
+      <h2><span class="no">Chapter 15</span> The full game: space shooter</h2>
+      <div class="ch-sub">Everything above, in one file</div>
+      <p>Left/right to move, space to shoot (hold for auto-fire), kill enemies
+      for points, don't get hit.</p>
+<pre><code class="python"><span class="lang">PYTHON</span><span class="tok-k">import</span> random
+<span class="tok-k">from</span> gamekit <span class="tok-k">import</span> Game, Scene, Key
+
+W, H = 640, 700
+
+<span class="tok-k">class</span> GameScene(Scene):
+    <span class="tok-k">def</span> __init__(self):
+        super().__init__("game")
+        self.score = 0
+        self.lives = 3
+        self.state = "play"        <span class="tok-c"># play / over</span>
+        self.shoot_cd = 0.0        <span class="tok-c"># fire cooldown</span>
+        self.spawn_timer = 0.0     <span class="tok-c"># enemy spawn timer</span>
+
+    <span class="tok-k">def</span> on_enter(self, game):
+        self.game = game
+        game.bg_color = "#0a0e18"
+
+        self.player = game.sprite(color="#4ac0f0", x=W // 2, y=H - 60,
+                                  width=50, height=40)
+        self.player.keep_on_screen = True
+
+        self.score_text = game.text("Score 0", x=90, y=26, size=20, bold=True)
+        self.lives_text = game.text("Lives 3", x=W - 90, y=26, size=20, bold=True)
+
+        <span class="tok-c"># Register collisions here — wiped on scene switch</span>
+        game.on_collide("bullet", "enemy")(self._on_bullet_enemy)
+        game.on_collide("enemy", self.player)(self._on_enemy_player)
+
+    <span class="tok-k">def</span> on_update(self, dt):
+        <span class="tok-k">if</span> self.state != "play":
+            <span class="tok-k">return</span>
+
+        <span class="tok-k">if</span> self.game.is_key_down(Key.LEFT) <span class="tok-k">or</span> self.game.is_key_down("a"):
+            self.player.vx = -320
+        <span class="tok-k">elif</span> self.game.is_key_down(Key.RIGHT) <span class="tok-k">or</span> self.game.is_key_down("d"):
+            self.player.vx = 320
+        <span class="tok-k">else</span>:
+            self.player.vx = 0
+
+        <span class="tok-k">if</span> self.game.is_key_down(Key.SPACE):   <span class="tok-c"># hold to auto-fire</span>
+            self.shoot()
+        self.shoot_cd -= dt
+
+        self.spawn_timer -= dt
+        <span class="tok-k">if</span> self.spawn_timer &lt;= 0:
+            self.spawn_timer = 1.2
+            self.spawn_enemy()
+
+        <span class="tok-k">for</span> e <span class="tok-k">in</span> self.game.find("enemy"):
+            <span class="tok-k">if</span> e.y &gt; H + 30:
+                e.remove()
+
+    <span class="tok-k">def</span> spawn_enemy(self):
+        self.game.sprite(color=random.choice(["#ff6b6b", "#ff9f43", "#c86bff"]),
+                         x=random.randint(40, W - 40), y=-20,
+                         width=36, height=30, tag="enemy").vy = random.randint(120, 220)
+
+    <span class="tok-k">def</span> shoot(self):
+        <span class="tok-k">if</span> self.shoot_cd &gt; 0 <span class="tok-k">or</span> self.state != "play":
+            <span class="tok-k">return</span>
+        self.shoot_cd = 0.28
+        self.game.sprite(color="#ffd700", x=self.player.x, y=self.player.y - 26,
+                         width=6, height=14, tag="bullet").vy = -520
+
+    <span class="tok-k">def</span> _on_bullet_enemy(self, bullet, enemy):
+        self.score += 10
+        self.score_text.set("Score %d" % self.score)
+        self.game.burst(enemy.x, enemy.y, count=16,
+                        colors=("orange", "yellow", "white"))
+        bullet.remove()
+        enemy.remove()
+
+    <span class="tok-k">def</span> _on_enemy_player(self, enemy, player):
+        <span class="tok-k">if</span> self.state != "play":
+            <span class="tok-k">return</span>
+        self.lives -= 1
+        self.lives_text.set("Lives %d" % self.lives)
+        self.game.burst(player.x, player.y, count=20, colors=("cyan", "white"))
+        enemy.remove()
+        <span class="tok-k">if</span> self.lives &lt;= 0:
+            self._game_over()
+
+    <span class="tok-k">def</span> _game_over(self):
+        self.state = "over"
+        <span class="tok-k">for</span> e <span class="tok-k">in</span> self.game.find("enemy"):
+            e.remove()
+        self.game.text("GAME OVER", x=W // 2, y=280, size=48, bold=True, color="#ff6b6b")
+        self.game.text("Score %d" % self.score, x=W // 2, y=340, size=26)
+        self.game.button("Play again", x=W // 2, y=410, width=160, height=48,
+                         on_click=<span class="tok-k">lambda</span> b: self.game.switch_scene(GameScene()))
+        self.game.button("Menu", x=W // 2, y=480, width=160, height=48,
+                         on_click=<span class="tok-k">lambda</span> b: self.game.switch_scene(MenuScene()))
+
+    <span class="tok-k">def</span> on_exit(self):
+        self.clear()
+
+<span class="tok-k">class</span> MenuScene(Scene):
+    <span class="tok-k">def</span> on_enter(self, game):
+        game.bg_color = "#0a0e18"
+        game.text("SPACE SHOOTER", x=W // 2, y=240, size=52, bold=True, color="#4ac0f0")
+        game.text("Arrows / AD to move, space to shoot. Don't get hit.",
+                  x=W // 2, y=310, size=16, color="#8899aa")
+        game.button("PLAY", x=W // 2, y=390, width=200, height=54,
+                    on_click=<span class="tok-k">lambda</span> b: self.game.switch_scene(GameScene()))
+        game.button("QUIT", x=W // 2, y=470, width=140, height=42,
+                    on_click=<span class="tok-k">lambda</span> b: self.game.stop())
+
+    <span class="tok-k">def</span> on_exit(self):
+        self.clear()
+
+<span class="tok-k">def</span> main():
+    game = Game(title="Space Shooter", width=W, height=H, fps=60)
+
+    @game.on_key(Key.ESC)
+    <span class="tok-k">def</span> quit_game():
+        game.stop()
+
+    game.switch_scene(MenuScene())
+    game.run()
+
+<span class="tok-k">if</span> __name__ == "__main__":
+    main()</code></pre>
+      <div class="note"><b>Full file:</b> <code>examples/05_space_shooter.py</code>,
+      run <code>python examples/05_space_shooter.py</code>. It uses sprites,
+      held-key input, tag collisions, particles, text, scenes, and buttons —
+      everything from the chapters above.</div>
+    </section>
+
+    <!-- ========== ch16 ========== -->
+    <section class="chapter" id="ch16">
+      <h2><span class="no">Chapter 16</span> FAQ and gotchas</h2>
+      <div class="ch-sub">Check this before you debug for an hour</div>
+      <table>
+        <tr><th>Problem</th><th>Fix</th></tr>
+        <tr><td>Window closes instantly</td><td>Add an ESC handler, or end with <code>input()</code> to hold it open</td></tr>
+        <tr><td>Text updates are slow</td><td>You're calling <code>game.text()</code> in a loop. Create once, call <code>.set()</code></td></tr>
+        <tr><td>A sprite doesn't move</td><td>Set <code>vx</code>/<code>vy</code>, or change <code>x</code>/<code>y</code> in <code>on_update</code>. Also check it's <code>visible</code></td></tr>
+        <tr><td>Collision never fires</td><td>Both need <code>solid=True</code> and <code>visible=True</code> (both default). And <code>on_collide</code> fires once per entry</td></tr>
+        <tr><td>Text shows boxes</td><td>Custom <code>font=</code> can't render the glyph; use the default font</td></tr>
+        <tr><td>Image won't load</td><td>PNG, GIF, BMP, PPM only. No JPG. Check the path</td></tr>
+      </table>
+      <h3>Performance</h3>
+      <ul>
+        <li>A few hundred solid sprites run smooth. A few thousand drop frames —
+        every frame redraws everything.</li>
+        <li>Prefer tags over per-sprite checks.</li>
+        <li>Rotating large images is expensive. Rotate at load time, not per
+        frame.</li>
+        <li>Reuse text objects.</li>
+      </ul>
+      <h3>Next steps</h3>
+      <ul>
+        <li>Speed the enemies up over time.</li>
+        <li>Turn the jump-and-land into a platformer.</li>
+        <li>Use <code>game.every</code> for countdowns and item respawns.</li>
+        <li>Publish your own game: <code>python -m build</code> then
+        <code>twine upload</code> — gamekit itself ships exactly that way.</li>
+      </ul>
+      <div class="note" style="margin-top:26px;text-align:center;font-size:17px;">
+        That's the whole library. Go make something.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  gamekit tutorial · zero third-party dependencies · generated from TUTORIAL.md
+</footer>
+
+<script>
+(function(){
+  // ---------- code highlighting ----------
+  function hl(code){
+    return code.replace(
+      /(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|\b(and|or|not|if|elif|else|for|while|def|return|import|from|class|try|except|in|is|lambda|None|True|False|global|pass|break|continue|as|with|assert|del|raise|yield)\b|\b(\d+\.?\d*)\b|(@\w+(?:\.\w+)*)/gm,
+      function(m, cm, st, kw, num, dec){
+        if(cm) return '<span class="tok-c">'+cm+'</span>';
+        if(st) return '<span class="tok-s">'+st+'</span>';
+        if(kw) return '<span class="tok-k">'+kw+'</span>';
+        if(num) return '<span class="tok-n">'+num+'</span>';
+        if(dec) return '<span class="tok-d">'+dec+'</span>';
+        return m;
+      });
+  }
+  document.querySelectorAll('pre code').forEach(function(b){
+    if(b.getAttribute('data-hl')) return;
+    b.setAttribute('data-hl','1');
+    var lang = b.querySelector('.lang');
+    if(lang) lang.remove();
+    b.innerHTML = hl(b.innerHTML);
+    var pre = b.parentNode;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function(){
+      var txt = b.textContent;
+      if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy';},1500); }); }
+      else{ var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy';},1500); }
+    });
+    pre.appendChild(btn);
+  });
+
+  // ---------- sidebar active-chapter highlight ----------
+  var links = document.querySelectorAll('#sidebar a');
+  var secs = [];
+  links.forEach(function(a){ secs.push({id:a.getAttribute('href').slice(1), a:a}); });
+  function onScroll(){
+    var y = window.scrollY + 120;
+    var cur = null;
+    secs.forEach(function(s){
+      var el = document.getElementById(s.id);
+      if(el && el.offsetTop <= y) cur = s;
+    });
+    secs.forEach(function(s){ s.a.classList.toggle('active', s === cur); });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>

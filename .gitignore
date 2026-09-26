@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 运行时产物
+selftest_render.ps
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# C build artifacts (rebuilt fresh by GitHub Actions)
+*.pyd
+*.so
+*.dll
+*.obj
+*.exe
+
+# test / misc
+.pytest_cache/
+*.log
+.cwd_restore

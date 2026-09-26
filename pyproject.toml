@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gamekit2d"
+version = "1.0.2"
+description = "A tiny zero-dependency 2D game library (standard library only, self-made GDI renderer + tkinter + winsound). A simpler pygame."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "gamekit contributors" }]
+keywords = ["game", "2d", "game-engine", "tkinter", "zero-dependency", "pygame-alternative"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/yuleemoon/gamekit2d"
+Repository = "https://github.com/yuleemoon/gamekit2d"
+
+# 零第三方依赖：不声明任何 runtime dependencies
+
+[tool.setuptools.packages.find]
+include = ["gamekit*"]
+
+[tool.setuptools.package-data]
+gamekit = ["*.pyd", "*.dll"]

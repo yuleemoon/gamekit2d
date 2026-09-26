@@ -1,0 +1,55 @@
+# gamekit2d —— 自动构建 + 发布到 PyPI
+#
+# 触发方式：
+#   1. 打 tag（推荐发版方式）： git tag v1.0.3 && git push origin v1.0.3
+#   2. 手动触发：GitHub 仓库页面 → Actions → build-and-publish → Run workflow
+#
+# 需要提前配置（一次即可）：
+#   GitHub 仓库 Settings → Secrets and variables → Actions → New repository secret
+#   Name:  PYPI_TOKEN
+#   Value: PyPI 生成的 API token（见教程第 3 步）
+#
+# 目前只构建 Windows（因为 C 扩展是 Windows API）。
+# Linux/macOS 后端写好之后，在这个文件里追加两个 job 即可（见教程第 8 节）。
+
+name: build-and-publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows wheel + publish to PyPI
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: pip install --upgrade build twine
+
+      - name: Compile C extensions (_accel / _d2d / _d3d11)
+        run: python build_accel.py build_ext --inplace
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -q
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: Verify distributions (twine check)
+        run: python -m twine check dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: python -m twine upload dist/* --skip-existing
