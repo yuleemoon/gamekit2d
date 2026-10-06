@@ -34,7 +34,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install build tools
-        run: pip install --upgrade build twine
+        run: pip install --upgrade build twine setuptools wheel
 
       - name: Compile C extensions (_accel / _d2d / _d3d11)
         run: python build_accel.py build_ext --inplace
